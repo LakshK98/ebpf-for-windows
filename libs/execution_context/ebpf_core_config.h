@@ -12,7 +12,10 @@ extern "C"
 {
 #endif
 
-// Protocol mode definitions for eBPF core operations
+// Shared variables between ebpf_core.c and ebpf_core_config.c
+// Assume enabled until we can query it.
+extern bool _ebpf_platform_hypervisor_code_integrity_enabled;
+
 #define PROTOCOL_NATIVE_MODE 1
 #if !defined(CONFIG_BPF_JIT_DISABLED)
 #define PROTOCOL_JIT_MODE 2
@@ -31,7 +34,7 @@ extern "C"
 #define PROTOCOL_ALL_MODES PROTOCOL_NATIVE_MODE
 #endif
 
-// Function declarations for conditionally compiled protocol handlers
+
 #if !defined(CONFIG_BPF_JIT_DISABLED) || !defined(CONFIG_BPF_INTERPRETER_DISABLED)
 _Must_inspect_result_ ebpf_result_t
 ebpf_core_protocol_load_code(_In_ const ebpf_operation_load_code_request_t* request);
