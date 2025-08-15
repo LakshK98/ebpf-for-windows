@@ -25,6 +25,9 @@
     <ClCompile Include="..\..\libs\execution_context\unit\execution_context_unit_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\libs\execution_context\unit\execution_context_unit_test_jit.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\libs\runtime\unit\platform_unit_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -57,6 +60,9 @@
     <ClInclude Include="..\end_to_end\test_helper.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\libs\execution_context\unit\execution_context_unit_test_jit.h">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClInclude Include="..\..\libs\thunk\mock\mock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
