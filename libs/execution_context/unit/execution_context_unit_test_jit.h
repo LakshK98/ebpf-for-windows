@@ -76,11 +76,8 @@ class _ebpf_core_initializer
 {
   public:
     void
-    initialize()
-    {
-        REQUIRE(ebpf_core_initiate() == EBPF_SUCCESS);
-    }
-    ~_ebpf_core_initializer() { ebpf_core_terminate(); }
+    initialize();
+    ~_ebpf_core_initializer();
 };
 
 typedef struct empty_reply
@@ -150,7 +147,6 @@ void
 create_various_objects(std::vector<ebpf_handle_t>& program_handles, std::map<std::string, ebpf_handle_t>& map_handles);
 
 extern std::vector<GUID> _program_types;
-
 extern std::map<std::string, ebpf_map_definition_in_memory_t> _map_definitions;
 
 #define NEGATIVE_TEST_PROLOG()                                                        \

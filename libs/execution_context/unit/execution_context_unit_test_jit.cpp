@@ -1,8 +1,6 @@
 // Copyright (c) eBPF for Windows contributors
 // SPDX-License-Identifier: MIT
 
-// #define EBPF_FILE_ID EBPF_FILE_ID_EXECUTION_CONTEXT_UNIT_TESTS_JIT
-
 #include "catch_wrapper.hpp"
 #include "ebpf_async.h"
 #include "ebpf_core.h"
@@ -63,6 +61,17 @@ _ebpf_async_wrapper::completion_callback(_In_ void* context, size_t reply_size, 
     async_wrapper->_reply_size = reply_size;
     async_wrapper->_completed = true;
     SetEvent(async_wrapper->_event);
+}
+
+void
+_ebpf_core_initializer::initialize()
+{
+    REQUIRE(ebpf_core_initiate() == EBPF_SUCCESS);
+}
+
+_ebpf_core_initializer::~_ebpf_core_initializer()
+{
+    ebpf_core_terminate();
 }
 
 void
@@ -410,13 +419,14 @@ test_program_context()
 
     ebpf_free_trampoline_table(table.release());
 }
-#else
-void
-test_program_context()
+
+// Only run the test if JIT is enabled.
+TEST_CASE("program", "[execution_context]")
 {
-    // When JIT is disabled, this function is a no-op.
-    return;
+    test_program_context();
 }
+#else
+    std::cout << "Skipped test case program." << std::endl;
 #endif
 
 #if !defined(CONFIG_BPF_JIT_DISABLED)

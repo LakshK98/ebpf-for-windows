@@ -1130,11 +1130,6 @@ test_function()
     return TEST_FUNCTION_RETURN;
 }
 
-TEST_CASE("program", "[execution_context]")
-{
-    test_program_context();
-}
-
 TEST_CASE("name size", "[execution_context]")
 {
     _ebpf_core_initializer core;
