@@ -183,9 +183,6 @@ test_ebpf_operation_load_code();
 
 #if !defined(CONFIG_BPF_JIT_DISABLED)
 void
-test_program_context();
-
-void
 test_ebpf_operation_resolve_helper();
 
 void
