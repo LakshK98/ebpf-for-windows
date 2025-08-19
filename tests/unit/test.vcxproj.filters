@@ -52,6 +52,9 @@
     <ClCompile Include="ebpfcore_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="libbpf_test_jit.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\end_to_end\helpers.h">
@@ -64,6 +67,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClInclude Include="..\..\libs\thunk\mock\mock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="libbpf_test_jit.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

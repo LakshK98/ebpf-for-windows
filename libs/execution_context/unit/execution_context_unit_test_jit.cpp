@@ -425,8 +425,6 @@ TEST_CASE("program", "[execution_context]")
 {
     test_program_context();
 }
-#else
-    std::cout << "Skipped test case program." << std::endl;
 #endif
 
 #if !defined(CONFIG_BPF_JIT_DISABLED)
