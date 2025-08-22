@@ -28,7 +28,7 @@ using namespace prevail;
 // Prefer 'enum class' over 'enum'"
 #pragma warning(disable : 26812)
 
-inline void
+void
 _ebpf_test_tail_call(_In_z_ const char* filename, uint32_t expected_result)
 {
     _test_helper_end_to_end test_helper;
