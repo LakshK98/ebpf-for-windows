@@ -38,7 +38,7 @@ const int nonexistent_fd = 12345678;
     DECLARE_JIT_TEST(_name, _group, _function)           \
     DECLARE_NATIVE_TEST(_name, _group, _function)
 
-inline void
+void
 _ebpf_test_tail_call(_In_z_ const char* filename, uint32_t expected_result);
 
 #if !defined(CONFIG_BPF_JIT_DISABLED)

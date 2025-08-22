@@ -22,6 +22,9 @@
     <ClCompile Include="..\end_to_end\end_to_end.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\end_to_end\end_to_end_jit.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\libs\execution_context\unit\execution_context_unit_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -57,6 +60,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\end_to_end\end_to_end_jit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\end_to_end\helpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
