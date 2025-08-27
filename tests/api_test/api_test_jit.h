@@ -34,9 +34,6 @@ typedef struct _audit_entry
 #define JIT_LOAD_RESULT -ENOTSUP
 #else
 #define JIT_LOAD_RESULT 0
-
-int32_t
-get_expected_jit_result(int32_t expected_result);
 #endif
 
 inline  _Success_(return == 0) int _program_load_helper(
@@ -141,6 +138,9 @@ _test_map_next_previous(const char* file_name, int expected_map_count)
 
     bpf_object__close(object);
 }
+
+int32_t
+_get_expected_jit_result(int32_t expected_result);
 
 void
 perform_socket_bind(const uint16_t test_port, bool expect_success);

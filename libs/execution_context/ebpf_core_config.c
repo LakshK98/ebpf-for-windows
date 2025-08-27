@@ -9,11 +9,12 @@
 #include "ebpf_serialize.h"
 
 // Forward declarations for external functions
-extern ebpf_result_t ebpf_program_create_and_initialize(const ebpf_program_parameters_t* parameters, _Out_ ebpf_handle_t* program_handle);
+extern _Must_inspect_result_ ebpf_result_t ebpf_program_create_and_initialize(
+    _In_ const ebpf_program_parameters_t* parameters, _Out_ ebpf_handle_t* program_handle);
 
 #if !defined(CONFIG_BPF_JIT_DISABLED) || !defined(CONFIG_BPF_INTERPRETER_DISABLED)
 _Must_inspect_result_ ebpf_result_t
-ebpf_core_protocol_load_code(_In_ const ebpf_operation_load_code_request_t* request)
+_ebpf_core_protocol_load_code(_In_ const ebpf_operation_load_code_request_t* request)
 {
     EBPF_LOG_ENTRY();
     ebpf_result_t retval;
@@ -60,19 +61,54 @@ ebpf_core_protocol_load_code(_In_ const ebpf_operation_load_code_request_t* requ
 Done:
     EBPF_RETURN_RESULT(retval);
 }
-#else
+
 _Must_inspect_result_ ebpf_result_t
-ebpf_core_protocol_load_code(_In_ const ebpf_operation_load_code_request_t* request)
+_ebpf_core_protocol_create_program(
+    _In_ const ebpf_operation_create_program_request_t* request, _Inout_ ebpf_operation_create_program_reply_t* reply)
 {
-    UNREFERENCED_PARAMETER(request);
-    ebpf_result_t retval = EBPF_OPERATION_NOT_SUPPORTED;
+    EBPF_LOG_ENTRY();
+    ebpf_result_t retval;
+    ebpf_program_parameters_t parameters = {0};
+    uint8_t* file_name = NULL;
+    size_t file_name_length = 0;
+    uint8_t* section_name = NULL;
+    size_t section_name_length = 0;
+    uint8_t* program_name = NULL;
+    size_t program_name_length = 0;
+
+    // Valid if:
+    // offsetof(data) <= section_name_offset <= program_name_offset <= header.length
+    if ((EBPF_OFFSET_OF(ebpf_operation_create_program_request_t, data) > request->section_name_offset) ||
+        (request->section_name_offset > request->program_name_offset) ||
+        (request->program_name_offset > request->header.length)) {
+        retval = EBPF_INVALID_ARGUMENT;
+        goto Done;
+    }
+    file_name = (uint8_t*)request->data;
+    section_name = ((uint8_t*)request) + request->section_name_offset;
+    program_name = ((uint8_t*)request) + request->program_name_offset;
+    file_name_length = section_name - file_name;
+    section_name_length = program_name - section_name;
+    program_name_length = ((uint8_t*)request) + request->header.length - program_name;
+
+    parameters.program_type = request->program_type;
+    parameters.program_name.value = program_name;
+    parameters.program_name.length = program_name_length;
+    parameters.section_name.value = section_name;
+    parameters.section_name.length = section_name_length;
+    parameters.file_name.value = file_name;
+    parameters.file_name.length = file_name_length;
+
+    retval = ebpf_program_create_and_initialize(&parameters, &reply->program_handle);
+
+Done:
     EBPF_RETURN_RESULT(retval);
 }
 #endif
 
 #if !defined(CONFIG_BPF_JIT_DISABLED)
 _Must_inspect_result_ ebpf_result_t
-ebpf_core_protocol_resolve_helper(
+_ebpf_core_protocol_resolve_helper(
     _In_ const ebpf_operation_resolve_helper_request_t* request,
     _Inout_ ebpf_operation_resolve_helper_reply_t* reply,
     uint16_t reply_length)
@@ -81,9 +117,9 @@ ebpf_core_protocol_resolve_helper(
     uint32_t* request_helper_ids = NULL;
     size_t required_reply_length = 0;
     size_t helper_id_length;
-    ebpf_result_t retval = ebpf_safe_size_t_subtract(
+    ebpf_result_t return_value = ebpf_safe_size_t_subtract(
         request->header.length, EBPF_OFFSET_OF(ebpf_operation_resolve_helper_request_t, helper_id), &helper_id_length);
-    if (retval != EBPF_SUCCESS) {
+    if (return_value != EBPF_SUCCESS) {
         goto Done;
     }
     size_t count_of_helpers = helper_id_length / sizeof(request->helper_id[0]);
@@ -92,14 +128,14 @@ ebpf_core_protocol_resolve_helper(
     size_t helper_index;
 
     if (reply_length < required_reply_length) {
-        retval = EBPF_INVALID_ARGUMENT;
+        return_value = EBPF_INVALID_ARGUMENT;
         goto Done;
     }
 
     if (count_of_helpers != 0) {
         request_helper_ids = (uint32_t*)ebpf_allocate_with_tag(count_of_helpers * sizeof(uint32_t), EBPF_POOL_TAG_CORE);
         if (request_helper_ids == NULL) {
-            retval = EBPF_NO_MEMORY;
+            return_value = EBPF_NO_MEMORY;
             goto Done;
         }
         for (helper_index = 0; helper_index < count_of_helpers; helper_index++) {
@@ -107,33 +143,18 @@ ebpf_core_protocol_resolve_helper(
         }
     }
 
-    retval =
+    return_value =
         ebpf_core_resolve_helper(request->program_handle, count_of_helpers, request_helper_ids, reply->address);
 
 Done:
-    if (retval == EBPF_SUCCESS) {
+    if (return_value == EBPF_SUCCESS) {
         reply->header.length = (uint16_t)required_reply_length;
     }
 
     ebpf_free(request_helper_ids);
-    EBPF_RETURN_RESULT(retval);
+    EBPF_RETURN_RESULT(return_value);
 }
-#else
-_Must_inspect_result_ ebpf_result_t
-ebpf_core_protocol_resolve_helper(
-    _In_ const ebpf_operation_resolve_helper_request_t* request,
-    _Inout_ ebpf_operation_resolve_helper_reply_t* reply,
-    uint16_t reply_length)
-{
-    UNREFERENCED_PARAMETER(request);
-    UNREFERENCED_PARAMETER(reply);
-    UNREFERENCED_PARAMETER(reply_length);
-    ebpf_result_t retval = EBPF_OPERATION_NOT_SUPPORTED;
-    EBPF_RETURN_RESULT(retval);
-}
-#endif
 
-#if !defined(CONFIG_BPF_JIT_DISABLED)
 _Must_inspect_result_ ebpf_result_t
 ebpf_core_protocol_resolve_map(
     _In_ const struct _ebpf_operation_resolve_map_request* request,
@@ -169,84 +190,9 @@ ebpf_core_protocol_resolve_map(
 Done:
     EBPF_RETURN_RESULT(return_value);
 }
-#else 
-_Must_inspect_result_ ebpf_result_t
-ebpf_core_protocol_resolve_map(
-    _In_ const struct _ebpf_operation_resolve_map_request* request,
-    _Inout_ struct _ebpf_operation_resolve_map_reply* reply,
-    uint16_t reply_length)
-{
-    UNREFERENCED_PARAMETER(request);
-    UNREFERENCED_PARAMETER(reply);
-    UNREFERENCED_PARAMETER(reply_length);
-    ebpf_result_t retval = EBPF_OPERATION_NOT_SUPPORTED;
-    EBPF_RETURN_RESULT(retval);
-}
-#endif
 
-
-#if !defined(CONFIG_BPF_JIT_DISABLED) || !defined(CONFIG_BPF_INTERPRETER_DISABLED)
-ebpf_result_t
-ebpf_core_protocol_create_program(
-    _In_ const ebpf_operation_create_program_request_t* request, _Inout_ ebpf_operation_create_program_reply_t* reply)
-{
-    EBPF_LOG_ENTRY();
-    ebpf_result_t retval;
-    ebpf_program_parameters_t parameters = {0};
-    uint8_t* file_name = NULL;
-    size_t file_name_length = 0;
-    uint8_t* section_name = NULL;
-    size_t section_name_length = 0;
-    uint8_t* program_name = NULL;
-    size_t program_name_length = 0;
-
-    // Valid if:
-    // offsetof(data) <= section_name_offset <= program_name_offset <= header.length
-    if ((EBPF_OFFSET_OF(ebpf_operation_create_program_request_t, data) > request->section_name_offset) ||
-        (request->section_name_offset > request->program_name_offset) ||
-        (request->program_name_offset > request->header.length)) {
-        retval = EBPF_INVALID_ARGUMENT;
-        goto Done;
-    }
-
-    file_name = (uint8_t*)request->data;
-    file_name_length = request->section_name_offset - EBPF_OFFSET_OF(ebpf_operation_create_program_request_t, data);
-
-    section_name = (uint8_t*)request->data + (request->section_name_offset - EBPF_OFFSET_OF(ebpf_operation_create_program_request_t, data));
-    section_name_length = request->program_name_offset - request->section_name_offset;
-
-    program_name = (uint8_t*)request->data + (request->program_name_offset - EBPF_OFFSET_OF(ebpf_operation_create_program_request_t, data));
-    program_name_length = request->header.length - request->program_name_offset;
-
-    cxplat_utf8_string_t file_name_string = {file_name, file_name_length};
-    cxplat_utf8_string_t section_name_string = {section_name, section_name_length};
-    cxplat_utf8_string_t program_name_string = {program_name, program_name_length};
-
-    parameters.program_type = request->program_type;
-    parameters.program_name = program_name_string;
-    parameters.section_name = section_name_string;
-    parameters.file_name = file_name_string;
-
-    retval = ebpf_program_create_and_initialize(&parameters, &reply->program_handle);
-
-Done:
-    EBPF_RETURN_RESULT(retval);
-}
-#else
-ebpf_result_t
-ebpf_core_protocol_create_program(
-    _In_ const ebpf_operation_create_program_request_t* request, _Inout_ ebpf_operation_create_program_reply_t* reply)
-{
-    UNREFERENCED_PARAMETER(request);
-    UNREFERENCED_PARAMETER(reply);
-    ebpf_result_t retval = EBPF_OPERATION_NOT_SUPPORTED;
-    EBPF_RETURN_RESULT(retval);
-}
-#endif
-
-#if !defined(CONFIG_BPF_JIT_DISABLED)
-uint64_t
-ebpf_core_protocol_get_ec_function(
+_Must_inspect_result_ uint64_t
+_ebpf_core_protocol_get_ec_function(
     _In_ const ebpf_operation_get_ec_function_request_t* request, _Inout_ ebpf_operation_get_ec_function_reply_t* reply)
 {
     EBPF_LOG_ENTRY();
@@ -256,15 +202,5 @@ ebpf_core_protocol_get_ec_function(
 
     reply->address = (uint64_t)ebpf_log_function;
     EBPF_RETURN_RESULT(EBPF_SUCCESS);
-}
-#else
-uint64_t
-ebpf_core_protocol_get_ec_function(
-    _In_ const ebpf_operation_get_ec_function_request_t* request, _Inout_ ebpf_operation_get_ec_function_reply_t* reply)
-{
-    UNREFERENCED_PARAMETER(request);
-    UNREFERENCED_PARAMETER(reply);
-    ebpf_result_t retval = EBPF_OPERATION_NOT_SUPPORTED;
-    EBPF_RETURN_RESULT(retval);
 }
 #endif

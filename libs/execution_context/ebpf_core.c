@@ -380,12 +380,6 @@ Done:
     EBPF_RETURN_RESULT(retval);
 }
 
-static ebpf_result_t
-_ebpf_core_protocol_load_code(_In_ const ebpf_operation_load_code_request_t* request)
-{
-    return ebpf_core_protocol_load_code(request);
-}
-
 _Must_inspect_result_ ebpf_result_t
 ebpf_core_resolve_helper(
     ebpf_handle_t program_handle,
@@ -422,15 +416,6 @@ Done:
     }
     EBPF_OBJECT_RELEASE_REFERENCE((ebpf_core_object_t*)program);
     EBPF_RETURN_RESULT(return_value);
-}
-
-static ebpf_result_t
-_ebpf_core_protocol_resolve_helper(
-    _In_ const ebpf_operation_resolve_helper_request_t* request,
-    _Inout_ ebpf_operation_resolve_helper_reply_t* reply,
-    uint16_t reply_length)
-{
-    return ebpf_core_protocol_resolve_helper(request, reply, reply_length);
 }
 
 _Must_inspect_result_ ebpf_result_t
@@ -507,15 +492,6 @@ Done:
     EBPF_RETURN_RESULT(return_value);
 }
 
-static ebpf_result_t
-_ebpf_core_protocol_resolve_map(
-    _In_ const struct _ebpf_operation_resolve_map_request* request,
-    _Inout_ struct _ebpf_operation_resolve_map_reply* reply,
-    uint16_t reply_length)
-{
-    return ebpf_core_protocol_resolve_map(request, reply, reply_length);
-}
-
 _Must_inspect_result_ ebpf_result_t
 ebpf_core_create_map(
     _In_ const cxplat_utf8_string_t* map_name,
@@ -563,13 +539,6 @@ _ebpf_core_protocol_create_map(
     retval = ebpf_core_create_map(&map_name, &request->ebpf_map_definition, request->inner_map_handle, &reply->handle);
 
     EBPF_RETURN_RESULT(retval);
-}
-
-static ebpf_result_t
-_ebpf_core_protocol_create_program(
-    _In_ const ebpf_operation_create_program_request_t* request, _Inout_ ebpf_operation_create_program_reply_t* reply)
-{
-    return ebpf_core_protocol_create_program(request, reply);
 }
 
 static ebpf_result_t
@@ -1549,13 +1518,6 @@ _ebpf_core_protocol_close_handle(_In_ const ebpf_operation_close_handle_request_
 {
     EBPF_LOG_ENTRY();
     EBPF_RETURN_RESULT(ebpf_handle_close(request->handle));
-}
-
-static uint64_t
-_ebpf_core_protocol_get_ec_function(
-    _In_ const ebpf_operation_get_ec_function_request_t* request, _Inout_ ebpf_operation_get_ec_function_reply_t* reply)
-{
-    return ebpf_core_protocol_get_ec_function(request, reply);
 }
 
 // Get helper info for a program or program type.  This is used by the jitter/verifier,
