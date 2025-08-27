@@ -9,6 +9,7 @@
 #include "bpf/libbpf.h"
 #include "catch_wrapper.hpp"
 #include "common_tests.h"
+#include "ebpf_ring_buffer_record.h"
 #include "ebpf_structs.h"
 #include "misc_helper.h"
 #include "native_helper.hpp"
@@ -240,6 +241,198 @@ TEST_CASE("test_ebpf_map_next_previous_native", "[test_ebpf_map_next_previous]")
     native_module_helper_t bindmonitor_helper;
     bindmonitor_helper.initialize("bindmonitor", EBPF_EXECUTION_NATIVE);
     _test_map_next_previous(bindmonitor_helper.get_file_name().c_str(), BIND_MONITOR_MAP_COUNT);
+}
+
+void
+perform_socket_bind(const uint16_t test_port, bool expect_success = true)
+{
+    WSAData data;
+    int error = WSAStartup(2, &data);
+    if (error != 0) {
+        FAIL("Unable to load Winsock: " << error);
+        return;
+    }
+
+    SOCKET _socket = INVALID_SOCKET;
+    _socket = WSASocket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP, nullptr, 0, 0);
+    REQUIRE(_socket != INVALID_SOCKET);
+    uint32_t ipv6_option = 0;
+    REQUIRE(
+        setsockopt(
+            _socket, IPPROTO_IPV6, IPV6_V6ONLY, reinterpret_cast<const char*>(&ipv6_option), sizeof(unsigned long)) ==
+        0);
+    SOCKADDR_STORAGE sock_addr;
+    sock_addr.ss_family = AF_INET6;
+    INETADDR_SETANY((PSOCKADDR)&sock_addr);
+
+    // Perform bind operation.
+    ((PSOCKADDR_IN6)&sock_addr)->sin6_port = htons(test_port);
+    if (expect_success) {
+        REQUIRE(bind(_socket, (PSOCKADDR)&sock_addr, sizeof(sock_addr)) == 0);
+    } else {
+        REQUIRE(bind(_socket, (PSOCKADDR)&sock_addr, sizeof(sock_addr)) != 0);
+    }
+
+    WSACleanup();
+}
+
+void
+ring_buffer_api_test(ebpf_execution_type_t execution_type)
+{
+    struct bpf_object* object = nullptr;
+    hook_helper_t hook(EBPF_ATTACH_TYPE_BIND);
+    program_load_attach_helper_t _helper;
+    _helper.initialize("bindmonitor_ringbuf.o", BPF_PROG_TYPE_BIND, "bind_monitor", execution_type, nullptr, 0, hook);
+    object = _helper.get_object();
+
+    fd_t process_map_fd = bpf_object__find_map_fd_by_name(object, "process_map");
+    REQUIRE(process_map_fd > 0);
+
+    // Create a list of fake app IDs and set it to event context.
+    std::wstring app_id = L"api_test.exe";
+    std::vector<std::vector<char>> app_ids;
+    char* p = reinterpret_cast<char*>(&app_id[0]);
+    std::vector<char> temp(p, p + (app_id.size() + 1) * sizeof(wchar_t));
+
+    // ring_buffer_api_test_helper expects a list of app IDs of size RING_BUFFER_TEST_EVENT_COUNT.
+    for (auto i = 0; i < RING_BUFFER_TEST_EVENT_COUNT; i++) {
+        app_ids.push_back(temp);
+    }
+
+    ring_buffer_api_test_helper(process_map_fd, app_ids, [](int i) {
+        const uint16_t _test_port = 12345 + static_cast<uint16_t>(i);
+        perform_socket_bind(_test_port);
+    });
+}
+
+// See also divide_by_zero_test_um in end_to_end.cpp for the user-mode equivalent.
+void
+divide_by_zero_test_km(ebpf_execution_type_t execution_type)
+{
+    struct bpf_object* object = nullptr;
+    hook_helper_t hook(EBPF_ATTACH_TYPE_BIND);
+    program_load_attach_helper_t _helper;
+    _helper.initialize("divide_by_zero.o", BPF_PROG_TYPE_BIND, "divide_by_zero", execution_type, nullptr, 0, hook);
+    object = _helper.get_object();
+
+    perform_socket_bind(0, true);
+
+    // If we don't bug-check, the test passed.
+}
+
+#if !defined(CONFIG_BPF_JIT_DISABLED)
+TEST_CASE("ringbuf_api_jit", "[test_ringbuf_api][ring_buffer]") { ring_buffer_api_test(EBPF_EXECUTION_JIT); }
+TEST_CASE("divide_by_zero_jit", "[divide_by_zero]") { divide_by_zero_test_km(EBPF_EXECUTION_JIT); }
+#endif
+
+#if !defined(CONFIG_BPF_INTERPRETER_DISABLED)
+TEST_CASE("ringbuf_api_interpret", "[test_ringbuf_api][ring_buffer]")
+{
+    ring_buffer_api_test(EBPF_EXECUTION_INTERPRET);
+}
+TEST_CASE("divide_by_zero_interpret", "[divide_by_zero]") { divide_by_zero_test_km(EBPF_EXECUTION_INTERPRET); }
+#endif
+
+TEST_CASE("ring_buffer_mmap_consumer", "[ring_buffer]")
+{
+    // Create a ring buffer map for testing.
+    fd_t map_fd = bpf_map_create(BPF_MAP_TYPE_RINGBUF, "test_ringbuf", 0, 0, 64 * 1024, nullptr);
+    REQUIRE(map_fd > 0);
+
+    // Create wait handle for notifications.
+    HANDLE wait_handle = CreateEvent(nullptr, false, false, nullptr);
+    REQUIRE(wait_handle != NULL);
+
+    // Set map wait handle.
+    ebpf_result result = ebpf_map_set_wait_handle(map_fd, 0, (ebpf_handle_t)wait_handle);
+    REQUIRE(result == EBPF_SUCCESS);
+
+    // Get pointers to the mapped memory regions.
+    const volatile LONG64* producer_ptr = nullptr;
+    volatile LONG64* consumer_ptr = nullptr;
+    const uint8_t* data = nullptr;
+    size_t data_size = 0;
+
+    result =
+        ebpf_ring_buffer_map_map_buffer(map_fd, (void**)&consumer_ptr, (const void**)&producer_ptr, &data, &data_size);
+    REQUIRE(result == EBPF_SUCCESS);
+    REQUIRE(producer_ptr != nullptr);
+    REQUIRE(consumer_ptr != nullptr);
+    REQUIRE(data != nullptr);
+
+    // Initialize offsets.
+    uint64_t producer_offset = ReadAcquire64(producer_ptr);
+    uint64_t consumer_offset = ReadNoFence64(consumer_ptr);
+    bool have_data = producer_offset > consumer_offset;
+    REQUIRE(have_data == false);
+
+    // Write some test data to the ring buffer.
+    std::string test_data = "Hello, Ring Buffer!";
+    result = ebpf_ring_buffer_map_write(map_fd, test_data.c_str(), test_data.length());
+    REQUIRE(result == EBPF_SUCCESS);
+
+    // Write another test record.
+    std::string test_data2 = "Second record";
+    result = ebpf_ring_buffer_map_write(map_fd, test_data2.c_str(), test_data2.length());
+    REQUIRE(result == EBPF_SUCCESS);
+
+    // Update producer offset after writing.
+    producer_offset = ReadAcquire64(producer_ptr);
+    have_data = producer_offset > consumer_offset;
+    REQUIRE(have_data == true);
+
+    // Wait for notification.
+    DWORD wait_status = WaitForSingleObject(wait_handle, 1000);
+    REQUIRE(wait_status == WAIT_OBJECT_0);
+
+    // Consumer loop to read records.
+    uint32_t records_read = 0;
+    const uint32_t expected_records = 2;
+    std::vector<std::string> received_data;
+
+    while (records_read < expected_records) {
+        uint64_t remaining = producer_offset - consumer_offset;
+
+        // Check for empty ring.
+        if (remaining == 0) {
+            break;
+        }
+
+        REQUIRE(remaining > EBPF_RINGBUF_HEADER_SIZE);
+
+        // Get the next record.
+        const ebpf_ring_buffer_record_t* record =
+            ebpf_ring_buffer_next_record(data, data_size, consumer_offset, producer_offset);
+        REQUIRE(record != nullptr);
+
+        uint32_t record_length = ebpf_ring_buffer_record_length(record);
+        REQUIRE(record_length > 0);
+
+        // Read data from record.
+        std::string record_data(reinterpret_cast<const char*>(record->data), record_length);
+        received_data.push_back(record_data);
+        records_read++;
+
+        // Update consumer offset.
+        consumer_offset += ebpf_ring_buffer_record_total_size(record);
+        WriteNoFence64(consumer_ptr, consumer_offset);
+
+        // Update producer offset for next iteration.
+        producer_offset = ReadAcquire64(producer_ptr);
+    }
+
+    // Verify we read the expected records.
+    REQUIRE(records_read == expected_records);
+    REQUIRE(received_data.size() == expected_records);
+    REQUIRE(received_data[0] == test_data);
+    REQUIRE(received_data[1] == test_data2);
+
+    // Clean up.
+    REQUIRE(
+        ebpf_ring_buffer_map_unmap_buffer(map_fd, (void*)consumer_ptr, (void*)producer_ptr, (void*)data) ==
+        EBPF_SUCCESS);
+    CloseHandle(wait_handle);
+    _close(map_fd);
 }
 
 void
@@ -930,7 +1123,7 @@ trigger_ring_buffer_events(fd_t program_fd, uint32_t expected_event_count, _Inou
     REQUIRE(failure_count == 0);
 }
 
-TEST_CASE("test_ringbuffer_wraparound", "[stress][ring_buffer]")
+TEST_CASE("test_ringbuffer_concurrent_wraparound", "[stress][ring_buffer]")
 {
     // Load bindmonitor_ringbuf.sys.
     struct bpf_object* object = nullptr;
@@ -980,6 +1173,44 @@ TEST_CASE("test_ringbuffer_wraparound", "[stress][ring_buffer]")
 
     // Clean up.
     bpf_object__close(object);
+}
+
+TEST_CASE("test_ringbuffer_wraparound", "[ring_buffer]")
+{
+    const auto capacity = 4096;
+    std::string app_id = "api_test.exe";
+    const auto record_size = 0x18; // record header + data aligned to 8 bytes.
+    const auto iterations = static_cast<uint32_t>(capacity / record_size) * 2;
+
+    fd_t map_fd = bpf_map_create(BPF_MAP_TYPE_RINGBUF, "test_ringbuf", 0, 0, capacity, nullptr);
+    REQUIRE(map_fd > 0);
+
+    const volatile LONG64* producer_ptr = nullptr;
+    volatile LONG64* consumer_ptr = nullptr;
+    const uint8_t* data = nullptr;
+    size_t data_size = 0;
+
+    ebpf_result_t result =
+        ebpf_ring_buffer_map_map_buffer(map_fd, (void**)&consumer_ptr, (const void**)&producer_ptr, &data, &data_size);
+    REQUIRE(result == EBPF_SUCCESS);
+    REQUIRE(producer_ptr != nullptr);
+    REQUIRE(consumer_ptr != nullptr);
+    REQUIRE(data != nullptr);
+
+    for (uint32_t i = 0; i < iterations; i++) {
+        REQUIRE(ebpf_ring_buffer_map_write(map_fd, app_id.data(), app_id.size()) == EBPF_SUCCESS);
+
+        uint64_t prod = ReadAcquire64(producer_ptr);
+        uint64_t cons = ReadAcquire64(consumer_ptr);
+        REQUIRE(prod >= cons);
+        REQUIRE(prod - cons < 4096);
+
+        // Consume all data.
+        WriteRelease64(consumer_ptr, prod);
+    }
+
+    // Clean up.
+    _close(map_fd);
 }
 
 typedef struct _perf_event_array_test_context
