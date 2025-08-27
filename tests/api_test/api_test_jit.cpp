@@ -172,20 +172,16 @@ divide_by_zero_test_km(ebpf_execution_type_t execution_type)
     // If we don't bug-check, the test passed.
 }
 
-#if defined(CONFIG_BPF_JIT_DISABLED)
 int32_t
-get_expected_jit_result(int32_t expected_result)
+_get_expected_jit_result(int32_t expected_result)
 {
+#if defined(CONFIG_BPF_JIT_DISABLED)
     UNREFERENCED_PARAMETER(expected_result);
     return -ENOTSUP;
-}
 #else
-int32_t
-get_expected_jit_result(int32_t expected_result)
-{
     return expected_result;
-}
 #endif
+}
 
 #if !defined(CONFIG_BPF_JIT_DISABLED)
 TEST_CASE("test_ebpf_program_next_previous_jit", "[test_ebpf_program_next_previous]")

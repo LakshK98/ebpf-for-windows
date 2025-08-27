@@ -172,12 +172,6 @@ TEST_CASE("pinned_map_enum2", "[pinned_map_enum]") { ebpf_test_pinned_map_enum(f
 #define INTERPRET_LOAD_RESULT 0
 #endif
 
-static int32_t
-_get_expected_jit_result(int32_t expected_result)
-{
-    return get_expected_jit_result(expected_result);
-}
-
 // Load test_sample_ebpf (JIT) without providing expected program type.
 DECLARE_LOAD_TEST_CASE("test_sample_ebpf.o", BPF_PROG_TYPE_UNSPEC, EBPF_EXECUTION_JIT, JIT_LOAD_RESULT);
 
