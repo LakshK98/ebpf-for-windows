@@ -237,8 +237,9 @@ test_invalid_bpf_action(char log_buffer[])
 }
 #else
 void
-test_bpf_invalid_action(char log_buffer[])
+test_invalid_bpf_action(char log_buffer[])
 {
+    UNREFERENCED_PARAMETER(log_buffer);
     REQUIRE(errno == ENOTSUP);
 }
 #endif
@@ -2220,10 +2221,9 @@ TEST_CASE("BPF_PROG_ATTACH", "[libbpf][bpf]")
 }
 #endif
 
-#if !defined(CONFIG_BPF_JIT_DISABLED) || !defined(CONFIG_BPF_INTERPRETER_DISABLED)
-void
-test_bpf_prog_load_macro_logging()
+TEST_CASE("BPF_PROG_LOAD logging", "[libbpf][bpf]")
 {
+#if !defined(CONFIG_BPF_JIT_DISABLED) || !defined(CONFIG_BPF_INTERPRETER_DISABLED)
     _test_helper_libbpf test_helper;
     test_helper.initialize();
 
@@ -2250,15 +2250,11 @@ test_bpf_prog_load_macro_logging()
     attr.log_size = 1;
     fd = bpf(BPF_PROG_LOAD, (union bpf_attr*)&attr, sizeof(attr));
     REQUIRE(fd == -ENOSPC);
-}
 #else
-void
-test_bpf_prog_load_macro_logging()
-{
     // If JIT or interpreter is disabled, ensure the error is ERROR_NOT_SUPPORTED.
     union bpf_attr attr = {};
     int fd = bpf(BPF_PROG_LOAD, &attr, sizeof(attr));
     REQUIRE(fd < 0);
     REQUIRE(GetLastError() == ERROR_NOT_SUPPORTED);
-}
 #endif
+}

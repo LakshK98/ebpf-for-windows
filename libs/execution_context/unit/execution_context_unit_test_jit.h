@@ -173,25 +173,6 @@ void
 test_blocked_by_policy(ebpf_operation_id_t operation);
 #endif
 
-#if !defined(CONFIG_BPF_JIT_DISABLED) || !defined(CONFIG_BPF_INTERPRETER_DISABLED)
-void
-test_ebpf_operation_create_program();
-
-void
-test_ebpf_operation_load_code();
-#endif
-
-#if !defined(CONFIG_BPF_JIT_DISABLED)
-void
-test_ebpf_operation_resolve_helper();
-
-void
-test_ebpf_operation_resolve_map();
-
-void
-test_ebpf_operation_get_ec_function();
-#endif
-
 #ifdef __cplusplus
 }
 #endif

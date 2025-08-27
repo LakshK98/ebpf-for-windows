@@ -1861,23 +1861,6 @@ TEST_CASE("perf_event_array_async_query", "[execution_context][perf_event_array]
     // Cleanup and final checks will be done in the scope_exit block above.
 }
 
-// These tests exist to verify ebpf_core's parsing of messages.
-// See libbpf_test.cpp for invalid parameter but correctly formed message cases.
-TEST_CASE("EBPF_OPERATION_RESOLVE_HELPER", "[execution_context][negative]")
-{
-    test_ebpf_operation_resolve_helper();
-}
-
-TEST_CASE("EBPF_OPERATION_RESOLVE_MAP", "[execution_context][negative]")
-{
-    test_ebpf_operation_resolve_map();
-}
-
-TEST_CASE("EBPF_OPERATION_CREATE_PROGRAM", "[execution_context][negative]")
-{
-    test_ebpf_operation_create_program();
-}
-
 TEST_CASE("EBPF_OPERATION_CREATE_MAP", "[execution_context][negative]")
 {
     NEGATIVE_TEST_PROLOG();
@@ -1922,11 +1905,6 @@ TEST_CASE("EBPF_OPERATION_CREATE_MAP", "[execution_context][negative]")
     create_map_request->ebpf_map_definition.value_size = 1;
     create_map_request->inner_map_handle = program_handles[0];
     REQUIRE(invoke_protocol(EBPF_OPERATION_CREATE_MAP, request, reply) == EBPF_INVALID_ARGUMENT);
-}
-
-TEST_CASE("EBPF_OPERATION_LOAD_CODE", "[execution_context][negative]")
-{
-    test_ebpf_operation_load_code();
 }
 
 TEST_CASE("EBPF_OPERATION_LOAD_NATIVE_MODULE", "[execution_context][negative]")
@@ -2187,11 +2165,6 @@ TEST_CASE("EBPF_OPERATION_LINK_PROGRAM", "[execution_context][negative]")
     // No provider.
     link_program_request->program_handle = program_handles[0];
     REQUIRE(invoke_protocol(EBPF_OPERATION_LINK_PROGRAM, request, reply) == EBPF_INVALID_ARGUMENT);
-}
-
-TEST_CASE("EBPF_OPERATION_GET_EC_FUNCTION", "[execution_context][negative]")
-{
-    test_ebpf_operation_get_ec_function();
 }
 
 TEST_CASE("EBPF_OPERATION_GET_PROGRAM_INFO", "[execution_context][negative]")

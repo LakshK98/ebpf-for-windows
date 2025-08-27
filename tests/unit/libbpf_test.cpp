@@ -1305,11 +1305,6 @@ TEST_CASE("Map and program information", "[libbpf][bpf]")
 #endif
 }
 
-TEST_CASE("BPF_PROG_LOAD logging", "[libbpf][bpf]")
-{
-    test_bpf_prog_load_macro_logging();
-}
-
 TEST_CASE("libbpf_num_possible_cpus", "[libbpf]")
 {
     int cpu_count = libbpf_num_possible_cpus();
