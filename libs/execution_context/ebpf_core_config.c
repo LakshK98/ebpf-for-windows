@@ -156,7 +156,7 @@ Done:
 }
 
 _Must_inspect_result_ ebpf_result_t
-ebpf_core_protocol_resolve_map(
+_ebpf_core_protocol_resolve_map(
     _In_ const struct _ebpf_operation_resolve_map_request* request,
     _Inout_ struct _ebpf_operation_resolve_map_reply* reply,
     uint16_t reply_length)

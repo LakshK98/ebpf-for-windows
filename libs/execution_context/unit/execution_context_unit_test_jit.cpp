@@ -188,9 +188,9 @@ test_ebpf_operation_create_program()
 #endif
 
 #if !defined(CONFIG_BPF_JIT_DISABLED) || !defined(CONFIG_BPF_INTERPRETER_DISABLED)
-void
-test_ebpf_operation_load_code()
+TEST_CASE("EBPF_OPERATION_LOAD_CODE", "[execution_context][negative]")
 {
+
     // Test with type jit.
     {
         NEGATIVE_TEST_PROLOG();
@@ -232,8 +232,7 @@ test_ebpf_operation_load_code()
     _ebpf_platform_code_integrity_enabled = false;
 }
 #else
-void
-test_ebpf_operation_load_code()
+TEST_CASE("EBPF_OPERATION_LOAD_CODE", "[execution_context][negative]")
 {
     test_blocked_by_policy(EBPF_OPERATION_LOAD_CODE);
 }
@@ -428,8 +427,9 @@ TEST_CASE("program", "[execution_context]")
 #endif
 
 #if !defined(CONFIG_BPF_JIT_DISABLED)
-void
-test_ebpf_operation_resolve_helper()
+// These tests exist to verify ebpf_core's parsing of messages.
+// See libbpf_test.cpp for invalid parameter but correctly formed message cases.
+TEST_CASE("EBPF_OPERATION_RESOLVE_HELPER", "[execution_context][negative]")
 {
     NEGATIVE_TEST_PROLOG();
 
@@ -464,16 +464,8 @@ test_ebpf_operation_resolve_helper()
     resolve_helper_request->helper_id[0] = 1;
     REQUIRE(invoke_protocol(EBPF_OPERATION_RESOLVE_HELPER, request, reply) == EBPF_INVALID_ARGUMENT);
 }
-#else
-test_ebpf_operation_resolve_helper()
-{
-    test_blocked_by_policy(EBPF_OPERATION_RESOLVE_HELPER);
-}
-#endif
 
-#if !defined(CONFIG_BPF_JIT_DISABLED)
-void
-test_ebpf_operation_resolve_map()
+TEST_CASE("EBPF_OPERATION_RESOLVE_MAP", "[execution_context][negative]")
 {
     NEGATIVE_TEST_PROLOG();
 
@@ -507,16 +499,81 @@ test_ebpf_operation_resolve_map()
     REQUIRE(invoke_protocol(EBPF_OPERATION_RESOLVE_MAP, request, reply) == EBPF_INVALID_ARGUMENT);
 }
 #else
-void
-test_ebpf_operation_resolve_map()
+TEST_CASE("EBPF_OPERATION_RESOLVE_HELPER", "[execution_context][negative]")
+{
+    test_blocked_by_policy(EBPF_OPERATION_RESOLVE_HELPER);
+}
+
+TEST_CASE("EBPF_OPERATION_RESOLVE_MAP", "[execution_context][negative]")
 {
     test_blocked_by_policy(EBPF_OPERATION_RESOLVE_MAP);
 }
 #endif
 
+#if !defined(CONFIG_BPF_JIT_DISABLED) || !defined(CONFIG_BPF_INTERPRETER_DISABLED)
+TEST_CASE("EBPF_OPERATION_CREATE_PROGRAM", "[execution_context][negative]")
+{
+    NEGATIVE_TEST_PROLOG();
+
+    std::vector<uint8_t> request(EBPF_OFFSET_OF(ebpf_operation_create_program_request_t, data));
+    std::vector<uint8_t> reply(sizeof(ebpf_operation_create_program_reply_t));
+    auto create_program_request = reinterpret_cast<ebpf_operation_create_program_request_t*>(request.data());
+    create_program_request->program_type = _program_types[0];
+    create_program_request->section_name_offset = EBPF_OFFSET_OF(ebpf_operation_create_program_request_t, data);
+    create_program_request->program_name_offset = EBPF_OFFSET_OF(ebpf_operation_create_program_request_t, data);
+    // No name, no section offset, no filename - Should be permitted.
+    REQUIRE(invoke_protocol(EBPF_OPERATION_CREATE_PROGRAM, request, reply) == EBPF_SUCCESS);
+
+    request.resize(request.size() + 10);
+    create_program_request = reinterpret_cast<ebpf_operation_create_program_request_t*>(request.data());
+
+    // Section name before start of valid region.
+    create_program_request->section_name_offset = EBPF_OFFSET_OF(ebpf_operation_create_program_request_t, data) - 1;
+    create_program_request->program_name_offset = EBPF_OFFSET_OF(ebpf_operation_create_program_request_t, data);
+    REQUIRE(invoke_protocol(EBPF_OPERATION_CREATE_PROGRAM, request, reply) == EBPF_INVALID_ARGUMENT);
+
+    // Program name before start of valid region.
+    create_program_request->section_name_offset = EBPF_OFFSET_OF(ebpf_operation_create_program_request_t, data);
+    create_program_request->program_name_offset = EBPF_OFFSET_OF(ebpf_operation_create_program_request_t, data) - 1;
+    REQUIRE(invoke_protocol(EBPF_OPERATION_CREATE_PROGRAM, request, reply) == EBPF_INVALID_ARGUMENT);
+
+    // Section name past end of valid region.
+    create_program_request->section_name_offset = create_program_request->header.length + 1;
+    create_program_request->program_name_offset = EBPF_OFFSET_OF(ebpf_operation_create_program_request_t, data);
+    REQUIRE(invoke_protocol(EBPF_OPERATION_CREATE_PROGRAM, request, reply) == EBPF_INVALID_ARGUMENT);
+
+    // Section name past end of valid region.
+    create_program_request->section_name_offset = EBPF_OFFSET_OF(ebpf_operation_create_program_request_t, data);
+    create_program_request->program_name_offset = create_program_request->header.length + 1;
+    REQUIRE(invoke_protocol(EBPF_OPERATION_CREATE_PROGRAM, request, reply) == EBPF_INVALID_ARGUMENT);
+
+    request.resize(request.size() + 1024);
+    create_program_request = reinterpret_cast<ebpf_operation_create_program_request_t*>(request.data());
+
+    // Large file name.
+    create_program_request->section_name_offset = create_program_request->header.length;
+    create_program_request->program_name_offset = create_program_request->header.length;
+    REQUIRE(invoke_protocol(EBPF_OPERATION_CREATE_PROGRAM, request, reply) == EBPF_INVALID_ARGUMENT);
+
+    // Large section name - Permitted.
+    create_program_request->section_name_offset = EBPF_OFFSET_OF(ebpf_operation_create_program_request_t, data);
+    create_program_request->program_name_offset = create_program_request->header.length;
+    REQUIRE(invoke_protocol(EBPF_OPERATION_CREATE_PROGRAM, request, reply) == EBPF_SUCCESS);
+
+    // Large program name.
+    create_program_request->section_name_offset = EBPF_OFFSET_OF(ebpf_operation_create_program_request_t, data);
+    create_program_request->program_name_offset = EBPF_OFFSET_OF(ebpf_operation_create_program_request_t, data);
+    REQUIRE(invoke_protocol(EBPF_OPERATION_CREATE_PROGRAM, request, reply) == EBPF_INVALID_ARGUMENT);
+}
+#else
+TEST_CASE("EBPF_OPERATION_CREATE_PROGRAM", "[execution_context][negative]")
+{
+    test_blocked_by_policy(EBPF_OPERATION_CREATE_PROGRAM);
+}
+#endif
+
 #if !defined(CONFIG_BPF_JIT_DISABLED)
-void
-test_ebpf_operation_get_ec_function()
+TEST_CASE("EBPF_OPERATION_GET_EC_FUNCTION", "[execution_context][negative]")
 {
     NEGATIVE_TEST_PROLOG();
     ebpf_operation_get_ec_function_request_t request;
@@ -527,8 +584,7 @@ test_ebpf_operation_get_ec_function()
     REQUIRE(invoke_protocol(EBPF_OPERATION_GET_EC_FUNCTION, request, reply) == EBPF_INVALID_ARGUMENT);
 }
 #else
-void
-test_ebpf_operation_get_ec_function()
+TEST_CASE("EBPF_OPERATION_GET_EC_FUNCTION", "[execution_context][negative]")
 {
     test_blocked_by_policy(EBPF_OPERATION_GET_EC_FUNCTION);
 }
