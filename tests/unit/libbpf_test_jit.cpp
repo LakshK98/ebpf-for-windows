@@ -29,7 +29,7 @@ using namespace prevail;
 #pragma warning(disable : 26812)
 
 void
-_ebpf_test_tail_call(_In_z_ const char* filename, uint32_t expected_result)
+ebpf_test_tail_call(_In_z_ const char* filename, uint32_t expected_result)
 {
     _test_helper_end_to_end test_helper;
     test_helper.initialize();
@@ -1234,12 +1234,12 @@ TEST_CASE("libbpf obj pinning", "[libbpf]")
 TEST_CASE("good_tail_call-jit", "[libbpf]")
 {
     // Verify that 42 is returned, which is done by the callee.
-    _ebpf_test_tail_call("tail_call.o", 42);
+    ebpf_test_tail_call("tail_call.o", 42);
 }
 
 TEST_CASE("bad_tail_call-jit", "[libbpf]")
 {
-    _ebpf_test_tail_call("tail_call_bad.o", (uint32_t)(-EBPF_INVALID_ARGUMENT));
+    ebpf_test_tail_call("tail_call_bad.o", (uint32_t)(-EBPF_INVALID_ARGUMENT));
 }
 
 void

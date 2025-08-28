@@ -77,7 +77,7 @@ ebpf_program_load(
 }
 
 void
-_cgroup_load_test(
+cgroup_load_test(
     _In_z_ const char* file,
     _In_z_ const char* name,
     ebpf_program_type_t& program_type,
@@ -120,13 +120,13 @@ _cgroup_load_test(
 }
 
 void
-_cgroup_sock_addr_load_test(
+cgroup_sock_addr_load_test(
     _In_z_ const char* file,
     _In_z_ const char* name,
     ebpf_attach_type_t& attach_type,
     ebpf_execution_type_t execution_type)
 {
-    _cgroup_load_test(file, name, EBPF_PROGRAM_TYPE_CGROUP_SOCK_ADDR, attach_type, execution_type);
+    cgroup_load_test(file, name, EBPF_PROGRAM_TYPE_CGROUP_SOCK_ADDR, attach_type, execution_type);
 }
 
 static void
@@ -166,7 +166,7 @@ ebpf_program_attach_fds_test(ebpf_execution_type_t execution_type)
 #if !defined(CONFIG_BPF_JIT_DISABLED)
 TEST_CASE("cgroup_sockops_load_test", "[cgroup_sockops]")
 {
-    _cgroup_load_test(
+    cgroup_load_test(
         "sockops.o",
         "connection_monitor",
         EBPF_PROGRAM_TYPE_SOCK_OPS,
@@ -385,7 +385,7 @@ TEST_CASE("ebpf_program_attach_by_fds-native", "[end_to_end]") { ebpf_program_at
 
 #if !defined(CONFIG_BPF_INTERPRETER_DISABLED) || !defined(CONFIG_BPF_JIT_DISABLED)
 void
-_xdp_decapsulate_permit_packet_test(ebpf_execution_type_t execution_type, ADDRESS_FAMILY address_family)
+xdp_decapsulate_permit_packet_test(ebpf_execution_type_t execution_type, ADDRESS_FAMILY address_family)
 {
     _test_helper_end_to_end test_helper;
     test_helper.initialize();
@@ -492,11 +492,11 @@ TEST_CASE("ebpf_program_load_bytes-name-gen", "[end-to-end]")
 #if !defined(CONFIG_BPF_JIT_DISABLED)
 TEST_CASE("xdp-decapsulate-permit-v4-jit", "[xdp_tests]")
 {
-    _xdp_decapsulate_permit_packet_test(EBPF_EXECUTION_JIT, AF_INET);
+    xdp_decapsulate_permit_packet_test(EBPF_EXECUTION_JIT, AF_INET);
 }
 TEST_CASE("xdp-decapsulate-permit-v6-jit", "[xdp_tests]")
 {
-    _xdp_decapsulate_permit_packet_test(EBPF_EXECUTION_JIT, AF_INET6);
+    xdp_decapsulate_permit_packet_test(EBPF_EXECUTION_JIT, AF_INET6);
 }
 
 void
@@ -562,7 +562,7 @@ test_auto_pinned_maps_custom_path()
     REQUIRE(bpf_map_lookup_elem(port_map_fd, &key, &port_map_value) == EBPF_SUCCESS);
     REQUIRE(port_map_value == 200);
 
-    REQUIRE(_get_total_map_count() == 4);
+    REQUIRE(get_total_map_count() == 4);
 
     Platform::_close(outer_map_fd);
     Platform::_close(inner_map_fd);

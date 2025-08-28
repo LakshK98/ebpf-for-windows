@@ -39,7 +39,7 @@ const int nonexistent_fd = 12345678;
     DECLARE_NATIVE_TEST(_name, _group, _function)
 
 void
-_ebpf_test_tail_call(_In_z_ const char* filename, uint32_t expected_result);
+ebpf_test_tail_call(_In_z_ const char* filename, uint32_t expected_result);
 
 void
 test_invalid_bpf_action(char log_buffer[]);

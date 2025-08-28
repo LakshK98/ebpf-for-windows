@@ -1891,11 +1891,11 @@ DECLARE_ALL_TEST_CASES("xdp-encap-reflect-v6", "[xdp_tests]", _xdp_encap_reflect
 #if !defined(CONFIG_BPF_INTERPRETER_DISABLED)
 TEST_CASE("xdp-decapsulate-permit-v4-interpret", "[xdp_tests]")
 {
-    _xdp_decapsulate_permit_packet_test(EBPF_EXECUTION_INTERPRET, AF_INET);
+    xdp_decapsulate_permit_packet_test(EBPF_EXECUTION_INTERPRET, AF_INET);
 }
 TEST_CASE("xdp-decapsulate-permit-v6-interpret", "[xdp_tests]")
 {
-    _xdp_decapsulate_permit_packet_test(EBPF_EXECUTION_INTERPRET, AF_INET6);
+    xdp_decapsulate_permit_packet_test(EBPF_EXECUTION_INTERPRET, AF_INET6);
 }
 
 TEST_CASE("link_tests", "[end_to_end]")
@@ -1992,7 +1992,7 @@ _map_reuse_test(ebpf_execution_type_t execution_type)
     REQUIRE(bpf_map_lookup_elem(port_map_fd, &key, &port_map_value) == EBPF_SUCCESS);
     REQUIRE(port_map_value == 200);
 
-    REQUIRE(_get_total_map_count() == 4);
+    REQUIRE(get_total_map_count() == 4);
 
     Platform::_close(outer_map_fd);
     Platform::_close(inner_map_fd);
@@ -2212,7 +2212,7 @@ _map_reuse_2_test(ebpf_execution_type_t execution_type)
     REQUIRE(bpf_map_lookup_elem(port_map_fd, &key, &port_map_value) == EBPF_SUCCESS);
     REQUIRE(port_map_value == 200);
 
-    REQUIRE(_get_total_map_count() == 4);
+    REQUIRE(get_total_map_count() == 4);
 
     Platform::_close(outer_map_fd);
     Platform::_close(inner_map_fd);
@@ -2288,7 +2288,7 @@ _map_reuse_3_test(ebpf_execution_type_t execution_type)
     REQUIRE(bpf_map_lookup_elem(port_map_fd, &key, &port_map_value) == EBPF_SUCCESS);
     REQUIRE(port_map_value == 200);
 
-    REQUIRE(_get_total_map_count() == 3);
+    REQUIRE(get_total_map_count() == 3);
 
     Platform::_close(outer_map_fd);
     Platform::_close(inner_map_fd);

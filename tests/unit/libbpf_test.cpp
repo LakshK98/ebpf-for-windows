@@ -295,18 +295,18 @@ TEST_CASE("libbpf create ringbuf", "[libbpf]")
 TEST_CASE("good_tail_call-native", "[libbpf]")
 {
     // Verify that 42 is returned, which is done by the callee.
-    _ebpf_test_tail_call("tail_call_um.dll", 42);
+    ebpf_test_tail_call("tail_call_um.dll", 42);
 }
 
 TEST_CASE("good_tail_call_same_section-native", "[libbpf]")
 {
     // Verify that 42 is returned, which is done by the callee.
-    _ebpf_test_tail_call("tail_call_same_section_um.dll", 42);
+    ebpf_test_tail_call("tail_call_same_section_um.dll", 42);
 }
 
 TEST_CASE("bad_tail_call-native", "[libbpf]")
 {
-    _ebpf_test_tail_call("tail_call_bad_um.dll", (uint32_t)(-EBPF_INVALID_ARGUMENT));
+    ebpf_test_tail_call("tail_call_bad_um.dll", (uint32_t)(-EBPF_INVALID_ARGUMENT));
 }
 
 static void
