@@ -21,7 +21,7 @@
 #define EBPF_SERVICE_NAME L"ebpfsvc"
 
 inline service_install_helper
-    _ebpf_service_helper(EBPF_SERVICE_NAME, EBPF_SERVICE_BINARY_NAME, SERVICE_WIN32_OWN_PROCESS);
+    ebpf_service_helper(EBPF_SERVICE_NAME, EBPF_SERVICE_BINARY_NAME, SERVICE_WIN32_OWN_PROCESS);
 #endif
 
 typedef struct _audit_entry
@@ -36,7 +36,7 @@ typedef struct _audit_entry
 #define JIT_LOAD_RESULT 0
 #endif
 
-inline  _Success_(return == 0) int _program_load_helper(
+inline  _Success_(return == 0) int program_load_helper(
     _In_z_ const char* file_name,
     bpf_prog_type prog_type,
     ebpf_execution_type_t execution_type,
@@ -72,7 +72,7 @@ inline  _Success_(return == 0) int _program_load_helper(
 }
 
 inline void
-_test_program_next_previous(const char* file_name, int expected_program_count)
+test_program_next_previous(const char* file_name, int expected_program_count)
 {
     int result;
     struct bpf_object* object = nullptr;
@@ -80,7 +80,7 @@ _test_program_next_previous(const char* file_name, int expected_program_count)
     int program_count = 0;
     struct bpf_program* previous = nullptr;
     struct bpf_program* next = nullptr;
-    result = _program_load_helper(file_name, BPF_PROG_TYPE_UNSPEC, EBPF_EXECUTION_ANY, &object, &program_fd);
+    result = program_load_helper(file_name, BPF_PROG_TYPE_UNSPEC, EBPF_EXECUTION_ANY, &object, &program_fd);
     REQUIRE(result == 0);
 
     next = bpf_object__next_program(object, previous);
@@ -106,7 +106,7 @@ _test_program_next_previous(const char* file_name, int expected_program_count)
 }
 
 inline void
-_test_map_next_previous(const char* file_name, int expected_map_count)
+test_map_next_previous(const char* file_name, int expected_map_count)
 {
     int result;
     struct bpf_object* object = nullptr;
@@ -114,7 +114,7 @@ _test_map_next_previous(const char* file_name, int expected_map_count)
     int map_count = 0;
     struct bpf_map* previous = nullptr;
     struct bpf_map* next = nullptr;
-    result = _program_load_helper(file_name, BPF_PROG_TYPE_UNSPEC, EBPF_EXECUTION_ANY, &object, &program_fd);
+    result = program_load_helper(file_name, BPF_PROG_TYPE_UNSPEC, EBPF_EXECUTION_ANY, &object, &program_fd);
     REQUIRE(result == 0);
 
     next = bpf_object__next_map(object, previous);
@@ -140,7 +140,7 @@ _test_map_next_previous(const char* file_name, int expected_map_count)
 }
 
 int32_t
-_get_expected_jit_result(int32_t expected_result);
+get_expected_jit_result(int32_t expected_result);
 
 void
 perform_socket_bind(const uint16_t test_port, bool expect_success);

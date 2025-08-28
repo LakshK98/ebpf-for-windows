@@ -14,7 +14,7 @@ extern _Must_inspect_result_ ebpf_result_t ebpf_program_create_and_initialize(
 
 #if !defined(CONFIG_BPF_JIT_DISABLED) || !defined(CONFIG_BPF_INTERPRETER_DISABLED)
 _Must_inspect_result_ ebpf_result_t
-_ebpf_core_protocol_load_code(_In_ const ebpf_operation_load_code_request_t* request)
+ebpf_core_protocol_load_code(_In_ const ebpf_operation_load_code_request_t* request)
 {
     EBPF_LOG_ENTRY();
     ebpf_result_t retval;
@@ -63,7 +63,7 @@ Done:
 }
 
 _Must_inspect_result_ ebpf_result_t
-_ebpf_core_protocol_create_program(
+ebpf_core_protocol_create_program(
     _In_ const ebpf_operation_create_program_request_t* request, _Inout_ ebpf_operation_create_program_reply_t* reply)
 {
     EBPF_LOG_ENTRY();
@@ -108,7 +108,7 @@ Done:
 
 #if !defined(CONFIG_BPF_JIT_DISABLED)
 _Must_inspect_result_ ebpf_result_t
-_ebpf_core_protocol_resolve_helper(
+ebpf_core_protocol_resolve_helper(
     _In_ const ebpf_operation_resolve_helper_request_t* request,
     _Inout_ ebpf_operation_resolve_helper_reply_t* reply,
     uint16_t reply_length)
@@ -156,7 +156,7 @@ Done:
 }
 
 _Must_inspect_result_ ebpf_result_t
-_ebpf_core_protocol_resolve_map(
+ebpf_core_protocol_resolve_map(
     _In_ const struct _ebpf_operation_resolve_map_request* request,
     _Inout_ struct _ebpf_operation_resolve_map_reply* reply,
     uint16_t reply_length)
@@ -192,7 +192,7 @@ Done:
 }
 
 _Must_inspect_result_ uint64_t
-_ebpf_core_protocol_get_ec_function(
+ebpf_core_protocol_get_ec_function(
     _In_ const ebpf_operation_get_ec_function_request_t* request, _Inout_ ebpf_operation_get_ec_function_reply_t* reply)
 {
     EBPF_LOG_ENTRY();

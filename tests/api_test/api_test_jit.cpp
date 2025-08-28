@@ -22,7 +22,7 @@ tailcall_load_test(_In_z_ const char* file_name)
     struct bpf_object* object = nullptr;
     fd_t program_fd;
 
-    result = _program_load_helper(file_name, BPF_PROG_TYPE_SAMPLE, EBPF_EXECUTION_ANY, &object, &program_fd);
+    result = program_load_helper(file_name, BPF_PROG_TYPE_SAMPLE, EBPF_EXECUTION_ANY, &object, &program_fd);
     REQUIRE(result == 0);
 
     REQUIRE(program_fd > 0);
@@ -173,7 +173,7 @@ divide_by_zero_test_km(ebpf_execution_type_t execution_type)
 }
 
 int32_t
-_get_expected_jit_result(int32_t expected_result)
+get_expected_jit_result(int32_t expected_result)
 {
 #if defined(CONFIG_BPF_JIT_DISABLED)
     UNREFERENCED_PARAMETER(expected_result);
@@ -186,14 +186,14 @@ _get_expected_jit_result(int32_t expected_result)
 #if !defined(CONFIG_BPF_JIT_DISABLED)
 TEST_CASE("test_ebpf_program_next_previous_jit", "[test_ebpf_program_next_previous]")
 {
-    _test_program_next_previous("test_sample_ebpf.o", SAMPLE_PROGRAM_COUNT);
-    _test_program_next_previous("bindmonitor.o", BIND_MONITOR_PROGRAM_COUNT);
+    test_program_next_previous("test_sample_ebpf.o", SAMPLE_PROGRAM_COUNT);
+    test_program_next_previous("bindmonitor.o", BIND_MONITOR_PROGRAM_COUNT);
 }
 
 TEST_CASE("test_ebpf_map_next_previous_jit", "[test_ebpf_map_next_previous]")
 {
-    _test_map_next_previous("test_sample_ebpf.o", SAMPLE_MAP_COUNT);
-    _test_map_next_previous("bindmonitor.o", BIND_MONITOR_MAP_COUNT);
+    test_map_next_previous("test_sample_ebpf.o", SAMPLE_MAP_COUNT);
+    test_map_next_previous("bindmonitor.o", BIND_MONITOR_MAP_COUNT);
 }
 
 TEST_CASE("ringbuf_api_jit", "[test_ringbuf_api][ring_buffer]") { ring_buffer_api_test(EBPF_EXECUTION_JIT); }

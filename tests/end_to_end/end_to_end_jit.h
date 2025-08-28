@@ -32,7 +32,7 @@ namespace ebpf {
 #define DECLARE_CGROUP_SOCK_ADDR_LOAD_TEST2(file, name, attach_type, name_suffix, file_suffix, execution_type) \
     TEST_CASE("cgroup_sockaddr_load_test_" name "_" #attach_type "_" name_suffix, "[cgroup_sock_addr]")        \
     {                                                                                                          \
-        _cgroup_sock_addr_load_test(file file_suffix, name, attach_type, execution_type);                      \
+        cgroup_sock_addr_load_test(file file_suffix, name, attach_type, execution_type);                      \
     }
 
 #if !defined(CONFIG_BPF_JIT_DISABLED)
@@ -59,7 +59,7 @@ prepare_ip_packet(uint16_t ethernet_type)
 }
 
 inline int
-_get_total_map_count()
+get_total_map_count()
 {
     ebpf_id_t start_id = 0;
     ebpf_id_t end_id = 0;
@@ -239,15 +239,7 @@ ebpf_program_load(
     _Outptr_opt_result_maybenull_z_ const char** log_buffer);
 
 void
-_cgroup_load_test(
-    _In_z_ const char* file,
-    _In_z_ const char* name,
-    ebpf_program_type_t& program_type,
-    ebpf_attach_type_t& attach_type,
-    ebpf_execution_type_t execution_type);
-
-void
-_cgroup_sock_addr_load_test(
+cgroup_sock_addr_load_test(
     _In_z_ const char* file,
     _In_z_ const char* name,
     ebpf_attach_type_t& attach_type,
@@ -255,5 +247,5 @@ _cgroup_sock_addr_load_test(
 
 #if !defined(CONFIG_BPF_INTERPRETER_DISABLED) || !defined(CONFIG_BPF_JIT_DISABLED)
 void
-_xdp_decapsulate_permit_packet_test(ebpf_execution_type_t execution_type, ADDRESS_FAMILY address_family);
+xdp_decapsulate_permit_packet_test(ebpf_execution_type_t execution_type, ADDRESS_FAMILY address_family);
 #endif

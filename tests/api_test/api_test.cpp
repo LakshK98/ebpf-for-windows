@@ -57,7 +57,7 @@ _test_program_load(
     struct bpf_object* object = nullptr;
     fd_t program_fd;
 
-    result = _program_load_helper(file_name, program_type, execution_type, &object, &program_fd);
+    result = program_load_helper(file_name, program_type, execution_type, &object, &program_fd);
     REQUIRE(result == expected_load_result);
 
     if (expected_load_result == 0) {
@@ -124,7 +124,7 @@ _test_multiple_programs_load(
         struct bpf_object* object;
         fd_t program_fd;
 
-        result = _program_load_helper(file_name, program_type, execution_type, &object, &program_fd);
+        result = program_load_helper(file_name, program_type, execution_type, &object, &program_fd);
         REQUIRE(expected_load_result == result);
         if (expected_load_result == 0) {
             REQUIRE(program_fd > 0);
@@ -200,10 +200,10 @@ DECLARE_LOAD_TEST_CASE("bindmonitor.o", BPF_PROG_TYPE_UNSPEC, EBPF_EXECUTION_INT
 DECLARE_LOAD_TEST_CASE("bindmonitor.o", BPF_PROG_TYPE_BIND, EBPF_EXECUTION_JIT, JIT_LOAD_RESULT);
 
 // Try to load bindmonitor with providing wrong program type.
-DECLARE_LOAD_TEST_CASE("bindmonitor.o", BPF_PROG_TYPE_SAMPLE, EBPF_EXECUTION_ANY, _get_expected_jit_result(-EACCES));
+DECLARE_LOAD_TEST_CASE("bindmonitor.o", BPF_PROG_TYPE_SAMPLE, EBPF_EXECUTION_ANY, get_expected_jit_result(-EACCES));
 
 // Try to load an unsafe program.
-DECLARE_LOAD_TEST_CASE("printk_unsafe.o", BPF_PROG_TYPE_UNSPEC, EBPF_EXECUTION_ANY, _get_expected_jit_result(-EACCES));
+DECLARE_LOAD_TEST_CASE("printk_unsafe.o", BPF_PROG_TYPE_UNSPEC, EBPF_EXECUTION_ANY, get_expected_jit_result(-EACCES));
 
 // Try to load multiple programs of different program types
 TEST_CASE("test_ebpf_multiple_programs_load_jit")
@@ -225,22 +225,22 @@ TEST_CASE("test_ebpf_program_next_previous_native", "[test_ebpf_program_next_pre
 {
     native_module_helper_t test_sample_ebpf_helper;
     test_sample_ebpf_helper.initialize("test_sample_ebpf", EBPF_EXECUTION_NATIVE);
-    _test_program_next_previous(test_sample_ebpf_helper.get_file_name().c_str(), SAMPLE_PROGRAM_COUNT);
+    test_program_next_previous(test_sample_ebpf_helper.get_file_name().c_str(), SAMPLE_PROGRAM_COUNT);
 
     native_module_helper_t bindmonitor_helper;
     bindmonitor_helper.initialize("bindmonitor", EBPF_EXECUTION_NATIVE);
-    _test_program_next_previous(bindmonitor_helper.get_file_name().c_str(), BIND_MONITOR_PROGRAM_COUNT);
+    test_program_next_previous(bindmonitor_helper.get_file_name().c_str(), BIND_MONITOR_PROGRAM_COUNT);
 }
 
 TEST_CASE("test_ebpf_map_next_previous_native", "[test_ebpf_map_next_previous]")
 {
     native_module_helper_t test_sample_ebpf_helper;
     test_sample_ebpf_helper.initialize("test_sample_ebpf", EBPF_EXECUTION_NATIVE);
-    _test_map_next_previous(test_sample_ebpf_helper.get_file_name().c_str(), SAMPLE_MAP_COUNT);
+    test_map_next_previous(test_sample_ebpf_helper.get_file_name().c_str(), SAMPLE_MAP_COUNT);
 
     native_module_helper_t bindmonitor_helper;
     bindmonitor_helper.initialize("bindmonitor", EBPF_EXECUTION_NATIVE);
-    _test_map_next_previous(bindmonitor_helper.get_file_name().c_str(), BIND_MONITOR_MAP_COUNT);
+    test_map_next_previous(bindmonitor_helper.get_file_name().c_str(), BIND_MONITOR_MAP_COUNT);
 }
 
 TEST_CASE("ring_buffer_mmap_consumer", "[ring_buffer]")
@@ -696,7 +696,7 @@ TEST_CASE("native_module_handle_test", "[native_tests]")
     struct bpf_object* object2 = nullptr;
     fd_t program_fd;
 
-    result = _program_load_helper(
+    result = program_load_helper(
         _native_helper.get_file_name().c_str(), BPF_PROG_TYPE_BIND, EBPF_EXECUTION_NATIVE, &object, &program_fd);
     REQUIRE(result == 0);
     REQUIRE(program_fd != ebpf_fd_invalid);
@@ -725,7 +725,7 @@ TEST_CASE("native_module_handle_test", "[native_tests]")
     program->fd = ebpf_fd_invalid;
 
     // Try to load the same native module again, which should fail.
-    result = _program_load_helper(
+    result = program_load_helper(
         _native_helper.get_file_name().c_str(), BPF_PROG_TYPE_BIND, EBPF_EXECUTION_NATIVE, &object2, &program_fd);
     REQUIRE(result == -ENOENT);
 
@@ -738,7 +738,7 @@ TEST_CASE("native_module_handle_test", "[native_tests]")
 
     // Try to load the same native module again. It should succeed this time.
     object2 = nullptr;
-    result = _program_load_helper(
+    result = program_load_helper(
         _native_helper.get_file_name().c_str(), BPF_PROG_TYPE_BIND, EBPF_EXECUTION_NATIVE, &object2, &program_fd);
     REQUIRE(result == 0);
 
@@ -873,7 +873,7 @@ TEST_CASE("ioctl_stress", "[stress]")
     native_module_helper_t _native_helper;
     _native_helper.initialize("bindmonitor_ringbuf", EBPF_EXECUTION_NATIVE);
     REQUIRE(
-        _program_load_helper(
+        program_load_helper(
             _native_helper.get_file_name().c_str(), BPF_PROG_TYPE_BIND, EBPF_EXECUTION_NATIVE, &object, &program_fd) ==
         0);
 
@@ -1044,7 +1044,7 @@ TEST_CASE("test_ringbuffer_concurrent_wraparound", "[stress][ring_buffer]")
     native_helper.initialize("bindmonitor_ringbuf", EBPF_EXECUTION_NATIVE);
 
     REQUIRE(
-        _program_load_helper(
+        program_load_helper(
             native_helper.get_file_name().c_str(), BPF_PROG_TYPE_BIND, EBPF_EXECUTION_NATIVE, &object, &program_fd) ==
         0);
 
@@ -1147,7 +1147,7 @@ TEST_CASE("test_perfbuffer", "[stress][perf_buffer]")
     native_helper.initialize("bindmonitor_perf_event_array", EBPF_EXECUTION_NATIVE);
 
     REQUIRE(
-        _program_load_helper(
+        program_load_helper(
             native_helper.get_file_name().c_str(), BPF_PROG_TYPE_BIND, EBPF_EXECUTION_NATIVE, &object, &program_fd) ==
         0);
 
@@ -1220,7 +1220,7 @@ TEST_CASE("Test program order", "[native_tests]")
     native_module_helper_t _native_helper;
     _native_helper.initialize("multiple_programs", EBPF_EXECUTION_NATIVE);
     REQUIRE(
-        _program_load_helper(
+        program_load_helper(
             _native_helper.get_file_name().c_str(),
             BPF_PROG_TYPE_SAMPLE,
             EBPF_EXECUTION_NATIVE,

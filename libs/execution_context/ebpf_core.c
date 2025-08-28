@@ -2611,6 +2611,15 @@ typedef struct _ebpf_protocol_handler
      sizeof(ebpf_operation_##OPERATION##_reply_t),                           \
      .flags.value = FLAGS}
 
+// If function is not static, remove leading undercore to ebpf_core_protocol declaration. 
+// This is needed because some functions are defined and implemented in ebpf_core_config files due to JIT requirements.
+#define DECLARE_NON_STATIC_PROTOCOL_HANDLER_FIXED_REQUEST_FIXED_REPLY(OPERATION, FLAGS) \
+    {EBPF_PROTOCOL_FIXED_REQUEST_FIXED_REPLY,                                \
+     (void*)ebpf_core_protocol_##OPERATION,                                 \
+     sizeof(ebpf_operation_##OPERATION##_request_t),                         \
+     sizeof(ebpf_operation_##OPERATION##_reply_t),                           \
+     .flags.value = FLAGS}
+
 #define DECLARE_PROTOCOL_HANDLER_FIXED_REQUEST_VARIABLE_REPLY(OPERATION, VARIABLE_REPLY, FLAGS) \
     {EBPF_PROTOCOL_FIXED_REQUEST_VARIABLE_REPLY,                                                \
      (void*)_ebpf_core_protocol_##OPERATION,                                                    \
@@ -2624,6 +2633,14 @@ typedef struct _ebpf_protocol_handler
      EBPF_OFFSET_OF(ebpf_operation_##OPERATION##_request_t, VARIABLE_REQUEST),                 \
      .flags.value = FLAGS}
 
+// If function is not static, remove leading undercore to ebpf_core_protocol declaration. 
+// This is needed because some functions are defined and implemented in ebpf_core_config files due to JIT requirements.
+#define DECLARE_NON_STATIC_PROTOCOL_HANDLER_VARIABLE_REQUEST_NO_REPLY(OPERATION, VARIABLE_REQUEST, FLAGS) \
+    {EBPF_PROTOCOL_VARIABLE_REQUEST_NO_REPLY,                                                 \
+     (void*)ebpf_core_protocol_##OPERATION,                                                   \
+     EBPF_OFFSET_OF(ebpf_operation_##OPERATION##_request_t, VARIABLE_REQUEST),                \
+     .flags.value = FLAGS}
+
 #define DECLARE_PROTOCOL_HANDLER_VARIABLE_REQUEST_FIXED_REPLY(OPERATION, VARIABLE_REQUEST, FLAGS) \
     {EBPF_PROTOCOL_VARIABLE_REQUEST_FIXED_REPLY,                                                  \
      (void*)_ebpf_core_protocol_##OPERATION,                                                      \
@@ -2631,9 +2648,27 @@ typedef struct _ebpf_protocol_handler
      sizeof(ebpf_operation_##OPERATION##_reply_t),                                                \
      .flags.value = FLAGS}
 
+// If function is not static, remove leading undercore to ebpf_core_protocol declaration. 
+// This is needed because some functions are defined and implemented in ebpf_core_config files due to JIT requirements.
+#define DECLARE_NON_STATIC_PROTOCOL_HANDLER_VARIABLE_REQUEST_FIXED_REPLY(OPERATION, VARIABLE_REQUEST, FLAGS) \
+    {EBPF_PROTOCOL_VARIABLE_REQUEST_FIXED_REPLY,                                                 \
+     (void*)ebpf_core_protocol_##OPERATION,                                                      \
+     EBPF_OFFSET_OF(ebpf_operation_##OPERATION##_request_t, VARIABLE_REQUEST),                   \
+     sizeof(ebpf_operation_##OPERATION##_reply_t),                                               \
+     .flags.value = FLAGS}
+
 #define DECLARE_PROTOCOL_HANDLER_VARIABLE_REQUEST_VARIABLE_REPLY(OPERATION, VARIABLE_REQUEST, VARIABLE_REPLY, FLAGS) \
     {EBPF_PROTOCOL_VARIABLE_REQUEST_VARIABLE_REPLY,                                                                  \
      (void*)_ebpf_core_protocol_##OPERATION,                                                                         \
+     EBPF_OFFSET_OF(ebpf_operation_##OPERATION##_request_t, VARIABLE_REQUEST),                                       \
+     EBPF_OFFSET_OF(ebpf_operation_##OPERATION##_reply_t, VARIABLE_REPLY),                                           \
+     .flags.value = FLAGS}
+
+// If function is not static, remove leading undercore to ebpf_core_protocol declaration. 
+// This is needed because some functions are defined and implemented in ebpf_core_config files due to JIT requirements.
+#define DECLARE_NON_STATIC_PROTOCOL_HANDLER_VARIABLE_REQUEST_VARIABLE_REPLY(OPERATION, VARIABLE_REQUEST, VARIABLE_REPLY, FLAGS) \
+    {EBPF_PROTOCOL_VARIABLE_REQUEST_VARIABLE_REPLY,                                                                  \
+     (void*)ebpf_core_protocol_##OPERATION,                                                                          \
      EBPF_OFFSET_OF(ebpf_operation_##OPERATION##_request_t, VARIABLE_REQUEST),                                       \
      EBPF_OFFSET_OF(ebpf_operation_##OPERATION##_reply_t, VARIABLE_REPLY),                                           \
      .flags.value = FLAGS}
@@ -2668,22 +2703,22 @@ ALIAS_TYPES(get_handle_by_id, get_program_handle_by_id)
 
 static ebpf_protocol_handler_t _ebpf_protocol_handlers[] = {
 #if !defined(CONFIG_BPF_JIT_DISABLED)
-    DECLARE_PROTOCOL_HANDLER_VARIABLE_REQUEST_VARIABLE_REPLY(
+    DECLARE_NON_STATIC_PROTOCOL_HANDLER_VARIABLE_REQUEST_VARIABLE_REPLY(
         resolve_helper, helper_id, address, PROTOCOL_JIT_MODE | PROTOCOL_PRIVILEGED_OPERATION),
-    DECLARE_PROTOCOL_HANDLER_VARIABLE_REQUEST_VARIABLE_REPLY(
+    DECLARE_NON_STATIC_PROTOCOL_HANDLER_VARIABLE_REQUEST_VARIABLE_REPLY(
         resolve_map, map_handle, address, PROTOCOL_JIT_MODE | PROTOCOL_PRIVILEGED_OPERATION),
 #else
     DECLARE_PROTOCOL_HANDLER_INVALID(EBPF_PROTOCOL_VARIABLE_REQUEST_VARIABLE_REPLY),
     DECLARE_PROTOCOL_HANDLER_INVALID(EBPF_PROTOCOL_VARIABLE_REQUEST_VARIABLE_REPLY),
 #endif
 #if !defined(CONFIG_BPF_JIT_DISABLED) || !defined(CONFIG_BPF_INTERPRETER_DISABLED)
-    DECLARE_PROTOCOL_HANDLER_VARIABLE_REQUEST_FIXED_REPLY(create_program, data, PROTOCOL_JIT_OR_INTERPRET_MODE),
+    DECLARE_NON_STATIC_PROTOCOL_HANDLER_VARIABLE_REQUEST_FIXED_REPLY(create_program, data, PROTOCOL_JIT_OR_INTERPRET_MODE),
 #else
     DECLARE_PROTOCOL_HANDLER_INVALID(EBPF_PROTOCOL_VARIABLE_REQUEST_FIXED_REPLY),
 #endif
     DECLARE_PROTOCOL_HANDLER_VARIABLE_REQUEST_FIXED_REPLY(create_map, data, PROTOCOL_ALL_MODES),
 #if !defined(CONFIG_BPF_JIT_DISABLED) || !defined(CONFIG_BPF_INTERPRETER_DISABLED)
-    DECLARE_PROTOCOL_HANDLER_VARIABLE_REQUEST_NO_REPLY(
+    DECLARE_NON_STATIC_PROTOCOL_HANDLER_VARIABLE_REQUEST_NO_REPLY(
         load_code, code, PROTOCOL_JIT_OR_INTERPRET_MODE | PROTOCOL_PRIVILEGED_OPERATION),
 #else
     DECLARE_PROTOCOL_HANDLER_INVALID(EBPF_PROTOCOL_VARIABLE_REQUEST_NO_REPLY),
@@ -2701,7 +2736,7 @@ static ebpf_protocol_handler_t _ebpf_protocol_handlers[] = {
     DECLARE_PROTOCOL_HANDLER_VARIABLE_REQUEST_NO_REPLY(unlink_program, data, PROTOCOL_ALL_MODES),
     DECLARE_PROTOCOL_HANDLER_FIXED_REQUEST_NO_REPLY(close_handle, PROTOCOL_ALL_MODES),
 #if !defined(CONFIG_BPF_JIT_DISABLED)
-    DECLARE_PROTOCOL_HANDLER_FIXED_REQUEST_FIXED_REPLY(
+    DECLARE_NON_STATIC_PROTOCOL_HANDLER_FIXED_REQUEST_FIXED_REPLY(
         get_ec_function, PROTOCOL_JIT_MODE | PROTOCOL_PRIVILEGED_OPERATION),
 #else
     DECLARE_PROTOCOL_HANDLER_INVALID(EBPF_PROTOCOL_FIXED_REQUEST_FIXED_REPLY),
