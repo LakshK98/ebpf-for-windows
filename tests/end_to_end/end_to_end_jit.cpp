@@ -18,7 +18,7 @@ namespace ebpf {
 #include "net/if_ether.h"
 #include "net/ip.h"
 #include "net/udp.h"
-}; // namespace ebpf
+}; // namespace ebpf.
 #include "platform.h"
 #include "program_helper.h"
 #include "test_helper.hpp"
@@ -452,7 +452,7 @@ test_ebpf_program_load_bytes_name_gen()
     REQUIRE(insn_cnt != 0);
 
     fd_t program_fd;
-#pragma warning(suppress : 28193) // result is examined
+#pragma warning(suppress : 28193) // result is examined.
     ebpf_result_t result = ebpf_program_load_bytes(
         program_type,
         nullptr,

@@ -12,7 +12,7 @@ extern "C"
 {
 #endif
 
-// Shared variable between ebpf_core.c and ebpf_core_config.c, defined in ebpf_core.c
+// Shared variable between ebpf_core.c and ebpf_core_jit.c, defined in ebpf_core.c.
 extern bool _ebpf_platform_hypervisor_code_integrity_enabled;
 
 #define PROTOCOL_NATIVE_MODE 1

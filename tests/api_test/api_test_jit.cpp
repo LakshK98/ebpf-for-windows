@@ -12,7 +12,7 @@
 #include "service_helper.h"
 #include "socket_helper.h"
 
-#define _NTDEF_ // UNICODE_STRING is already defined
+#define _NTDEF_ // UNICODE_STRING is already defined.
 #include <ntsecapi.h>
 
 void
