@@ -37,7 +37,7 @@ typedef LARGE_INTEGER PHYSICAL_ADDRESS, *PPHYSICAL_ADDRESS;
 #define DECLARE_CGROUP_SOCK_ADDR_LOAD_TEST2(file, name, attach_type, name_suffix, file_suffix, execution_type) \
     TEST_CASE("cgroup_sockaddr_load_test_" name "_" #attach_type "_" name_suffix, "[cgroup_sock_addr]")        \
     {                                                                                                          \
-        cgroup_sock_addr_load_test(file file_suffix, name, attach_type, execution_type);                      \
+        cgroup_sock_addr_load_test(file file_suffix, name, attach_type, execution_type);                       \
     }
 
 typedef struct _sample_program_context_header

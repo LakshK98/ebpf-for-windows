@@ -257,10 +257,7 @@ test_enumerate_and_query_programs()
     }
 }
 
-TEST_CASE("enumerate_and_query_programs", "[end_to_end]")
-{
-    test_enumerate_and_query_programs();
-}
+TEST_CASE("enumerate_and_query_programs", "[end_to_end]") { test_enumerate_and_query_programs(); }
 
 void
 test_implicit_detach()
@@ -314,10 +311,7 @@ test_implicit_detach()
 }
 
 // This test uses ebpf_link_close() to test implicit detach.
-TEST_CASE("implicit_detach", "[end_to_end]")
-{
-    test_implicit_detach();
-}
+TEST_CASE("implicit_detach", "[end_to_end]") { test_implicit_detach(); }
 
 void
 test_implicit_detach_2()
@@ -373,10 +367,7 @@ test_implicit_detach_2()
 
 // This test uses bpf_link__disconnect() and bpf_link__destroy() to test
 // implicit detach.
-TEST_CASE("implicit_detach_2", "[end_to_end]")
-{
-    test_implicit_detach_2();
-}
+TEST_CASE("implicit_detach_2", "[end_to_end]") { test_implicit_detach_2(); }
 
 TEST_CASE("ebpf_program_attach_by_fds-jit", "[end_to_end]") { ebpf_program_attach_fds_test(EBPF_EXECUTION_JIT); }
 #endif
@@ -483,10 +474,7 @@ test_ebpf_program_load_bytes_name_gen()
     Platform::_close(program_fd);
 }
 
-TEST_CASE("ebpf_program_load_bytes-name-gen", "[end-to-end]")
-{
-    test_ebpf_program_load_bytes_name_gen();
-}
+TEST_CASE("ebpf_program_load_bytes-name-gen", "[end-to-end]") { test_ebpf_program_load_bytes_name_gen(); }
 #endif
 
 #if !defined(CONFIG_BPF_JIT_DISABLED)
@@ -572,10 +560,7 @@ test_auto_pinned_maps_custom_path()
     REQUIRE(ebpf_object_unpin("/custompath/global/port_map") == EBPF_SUCCESS);
 }
 
-TEST_CASE("auto_pinned_maps_custom_path", "[end_to_end]")
-{
-    test_auto_pinned_maps_custom_path();
-}
+TEST_CASE("auto_pinned_maps_custom_path", "[end_to_end]") { test_auto_pinned_maps_custom_path(); }
 #endif
 
 // This test validates that a different program type (XDP in this case) cannot call
