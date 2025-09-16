@@ -2,11 +2,15 @@
 // SPDX-License-Identifier: MIT
 
 #pragma once
+#include "api_internal.h"
+#include "bpf/libbpf.h"
 #include "catch_wrapper.hpp"
 #include "ebpf_api.h"
 #include "ebpf_result.h"
+#include "ebpf_structs.h"
+#include "service_helper.h"
 
-inline  _Success_(return == 0) int program_load_helper(
+inline _Success_(return == 0) int program_load_helper(
     _In_z_ const char* file_name,
     bpf_prog_type prog_type,
     ebpf_execution_type_t execution_type,
@@ -39,40 +43,6 @@ inline  _Success_(return == 0) int program_load_helper(
     }
     *object = new_object;
     return 0;
-}
-
-inline void
-test_program_next_previous(const char* file_name, int expected_program_count)
-{
-    int result;
-    struct bpf_object* object = nullptr;
-    fd_t program_fd;
-    int program_count = 0;
-    struct bpf_program* previous = nullptr;
-    struct bpf_program* next = nullptr;
-    result = program_load_helper(file_name, BPF_PROG_TYPE_UNSPEC, EBPF_EXECUTION_ANY, &object, &program_fd);
-    REQUIRE(result == 0);
-
-    next = bpf_object__next_program(object, previous);
-    while (next != nullptr) {
-        program_count++;
-        previous = next;
-        next = bpf_object__next_program(object, previous);
-    }
-    REQUIRE(program_count == expected_program_count);
-
-    program_count = 0;
-    previous = next = nullptr;
-
-    previous = bpf_object__prev_program(object, next);
-    while (previous != nullptr) {
-        program_count++;
-        next = previous;
-        previous = bpf_object__prev_program(object, next);
-    }
-    REQUIRE(program_count == expected_program_count);
-
-    bpf_object__close(object);
 }
 
 inline void

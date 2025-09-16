@@ -1,15 +1,16 @@
 // Copyright (c) eBPF for Windows contributors
 // SPDX-License-Identifier: MIT
 
-#include "ebpf_core_jit.h"
 #include "ebpf_core.h"
-#include "ebpf_program.h"
+#include "ebpf_core_jit.h"
 #include "ebpf_maps.h"
-#include "ebpf_tracelog.h"
+#include "ebpf_program.h"
 #include "ebpf_serialize.h"
+#include "ebpf_tracelog.h"
 
 // Forward declarations for external functions.
-extern _Must_inspect_result_ ebpf_result_t ebpf_program_create_and_initialize(
+extern _Must_inspect_result_ ebpf_result_t
+ebpf_program_create_and_initialize(
     _In_ const ebpf_program_parameters_t* parameters, _Out_ ebpf_handle_t* program_handle);
 
 #if !defined(CONFIG_BPF_JIT_DISABLED) || !defined(CONFIG_BPF_INTERPRETER_DISABLED)
